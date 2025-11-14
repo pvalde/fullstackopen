@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import personsService from "./services/persons";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -11,9 +11,9 @@ const App = () => {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
-    });
+    personsService
+      .getAll()
+      .then((initialPersons) => setPersons(initialPersons));
   }, []);
 
   const personsFiltered = persons.filter((person) =>
@@ -31,7 +31,22 @@ const App = () => {
     event.preventDefault();
     // check if a person is already registered:
     if (persons.some((person) => person.name === newName)) {
-      alert(`'${newName}' is already added to phonebook`);
+      const personToUpdate = persons.find((person) => person.name === newName);
+      if (
+        window.confirm(
+          `${personToUpdate.name} is already added to phonebook, replace the old number with a new one?`,
+        )
+      ) {
+        personsService
+          .update(personToUpdate.id, { ...personToUpdate, number: newNumber })
+          .then((personUpdated) => {
+            setPersons(
+              persons.map((person) =>
+                person.id === personUpdated.id ? personUpdated : person,
+              ),
+            );
+          });
+      }
       return;
     }
 
@@ -41,14 +56,13 @@ const App = () => {
       return;
     }
     // if not, add the new entry to the phonebook
-    setPersons(
-      persons.concat({
-        name: newName,
-        number: newNumber,
-      }),
-    );
-    setNewName("");
-    setNewNumber("");
+    personsService
+      .create({ name: newName, number: newNumber })
+      .then((createdPerson) => {
+        setPersons(persons.concat(createdPerson));
+        setNewName("");
+        setNewNumber("");
+      });
   };
 
   const handleOnChangeFilter = (event) => {
@@ -58,6 +72,31 @@ const App = () => {
       setFilter("");
     } else {
       setFilter(filter);
+    }
+  };
+
+  const handleDeletePerson = (id) => {
+    const person = persons.find((person) => person.id === id);
+    if (window.confirm(`Delete ${person.name}`)) {
+      personsService
+        .remove(id)
+        .then((personDeleted) => {
+          let updatedPersons = [];
+          persons.map((person) => {
+            if (person.id !== personDeleted.id) {
+              updatedPersons.push(person);
+            }
+          });
+          setPersons(updatedPersons);
+        })
+        .catch((error) =>
+          console.log(
+            "there was some error while removing ",
+            person.name,
+            ": ",
+            error,
+          ),
+        );
     }
   };
 
@@ -74,7 +113,7 @@ const App = () => {
         onChangeNumber={handleOnChangeInputNumber}
       />
       <h3>Numbers</h3>
-      <Persons persons={personsFiltered} />
+      <Persons persons={personsFiltered} deleteFunc={handleDeletePerson} />
     </div>
   );
 };
