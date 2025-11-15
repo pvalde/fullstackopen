@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Notification from "./components/Notification";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
@@ -9,6 +10,8 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filter, setFilter] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     personsService
@@ -45,6 +48,26 @@ const App = () => {
                 person.id === personUpdated.id ? personUpdated : person,
               ),
             );
+            return personUpdated;
+          })
+          .then((personUpdated) => {
+            setNotificationMessage(`${personUpdated.name}'s number updated`);
+            setTimeout(() => {
+              setNotificationMessage(null);
+            }, 5000);
+          })
+          .catch((error) => {
+            if (error.status === 404) {
+              setErrorMessage(
+                `Information of ${personToUpdate.name} has already been removed from server`,
+              );
+              setTimeout(() => {
+                setErrorMessage(null);
+              }, 5000);
+              setPersons(
+                persons.filter((person) => person.id !== personToUpdate.id),
+              );
+            }
           });
       }
       return;
@@ -62,6 +85,14 @@ const App = () => {
         setPersons(persons.concat(createdPerson));
         setNewName("");
         setNewNumber("");
+        return createdPerson;
+      })
+      .then((createdPerson) => {
+        // send notification of successful operation
+        setNotificationMessage(`Added ${createdPerson.name}`);
+        setTimeout(() => {
+          setNotificationMessage(null);
+        }, 5000);
       });
   };
 
@@ -103,6 +134,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification className="notification" message={notificationMessage} />
+      <Notification className="error" message={errorMessage} />
       <Filter value={filter} onChange={handleOnChangeFilter} />
       <h3>add a new</h3>
       <PersonForm
