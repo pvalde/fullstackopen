@@ -1,4 +1,9 @@
+import View from "./View";
+import { useState } from "react";
+
 const Matches = ({ results }) => {
+  switch (results) {
+  }
   if (results === null) {
     return null;
   } else if (results.length === 0) {
@@ -6,27 +11,39 @@ const Matches = ({ results }) => {
   } else if (results.length > 10) {
     return <p>Too many matches, specify another filter</p>;
   } else if (results.length === 1) {
-    const country = results[0];
-    const languages = results[0].languages;
-    return (
-      <div>
-        <h1>{country.name.common}</h1>
-        <p>Capital {country.capital}</p>
-        <p>Area {country.area}</p>
-        <h1>Languages</h1>
-        <ul>
-          {Object.keys(languages).map((key) => (
-            <li key={languages[key]}>{languages[key]}</li>
-          ))}
-        </ul>
-        <img src={country.flags.svg} width="100%" />
-      </div>
-    );
+    return <View country={results[0]} />;
   } else {
+    let counter = 0;
     return results.map((country) => (
-      <p key={country.name.common}>{country.name.common}</p>
+      <CountryEntry
+        key={country.name.common}
+        country={country}
+        index={counter++}
+      />
     ));
   }
+};
+
+const CountryEntry = ({ country, index }) => {
+  const [showView, setShowView] = useState(false);
+
+  const handleShow = () => {
+    if (showView) {
+      setShowView(false);
+    } else {
+      setShowView(true);
+    }
+  };
+
+  return (
+    <div id={`${country.name.common}-Entry`} className="countryEntry">
+      {country.name.common} {""}
+      <button onClick={handleShow} index={index}>
+        {showView ? "hide" : "show"}
+      </button>
+      {showView ? <View country={country} /> : null}
+    </div>
+  );
 };
 
 export default Matches;
