@@ -1,5 +1,7 @@
 import axios from "axios";
-const baseUrl = "/api/persons";
+const domain = import.meta.env.VITE_API_DOMAIN;
+
+const baseUrl = domain ? `${domain}/api/persons` : "/api/persons";
 
 const getAll = () => {
   return axios.get(baseUrl).then((response) => response.data);
