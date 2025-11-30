@@ -98,7 +98,7 @@ app.delete("/api/persons/:id", (request, response) => {
   const personToDelete = persons.find((person) => person.id == id);
   persons = persons.filter((person) => person.id !== id);
 
-  response.json(personToDelete).status(204);
+  response.status(204).json(personToDelete);
 });
 
 const PORT = process.env.PERSONS_API_PORT || 3001;
