@@ -107,23 +107,27 @@ const App = () => {
   };
 
   const handleDeletePerson = (id) => {
-    const person = persons.find((person) => person.id === id);
-    if (window.confirm(`Delete ${person.name}`)) {
+    const personToDelete = persons.find((person) => person.id === id);
+    if (window.confirm(`Delete ${personToDelete.name}`)) {
       personsService
         .remove(id)
-        .then((personDeleted) => {
-          let updatedPersons = [];
-          persons.map((person) => {
-            if (person.id !== personDeleted.id) {
-              updatedPersons.push(person);
-            }
-          });
-          setPersons(updatedPersons);
+        .then((response) => {
+          if (response.status == 204) {
+            let updatedPersons = [];
+            persons.map((person) => {
+              if (person.id !== personToDelete.id) {
+                updatedPersons.push(person);
+              }
+            });
+            setPersons(updatedPersons);
+          } else {
+            throw new Error(response.status);
+          }
         })
         .catch((error) =>
           console.log(
             "there was some error while removing ",
-            person.name,
+            personToDelete.name,
             ": ",
             error,
           ),
