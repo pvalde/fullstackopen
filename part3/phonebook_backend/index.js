@@ -1,6 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const Person = require("./models/person");
 
 morgan.token("body", (request, response) => {
   return request.body ? JSON.stringify(request.body) : "";
@@ -55,9 +57,12 @@ app.get("/info", (request, response) => {
 });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((people) => {
+    response.json(people);
+  });
 });
 
+//TODO
 app.post("/api/persons", (request, response) => {
   const body = request.body;
   if (!body.name || !body.number) {
@@ -69,30 +74,46 @@ app.post("/api/persons", (request, response) => {
     };
     return response.status(400).json(errorMessage);
   } else {
-    if (persons.some((person) => body.name === person.name)) {
-      return response.status(400).json({ error: "name must be unique" });
-    }
-    const person = {
-      id: generateId(),
+    const person = new Person({
       name: body.name,
       number: body.number,
-    };
-    persons = persons.concat(person);
-    response.json(person);
+    });
+
+    person.save().then((result) => {
+      response.json(person.toJSON());
+    });
+    // if (persons.some((person) => body.name === person.name)) {
+    //   return response.status(400).json({ error: "name must be unique" });
+    // }
+    // const person = {
+    //   id: generateId(),
+    //   name: body.name,
+    //   number: body.number,
+    // };
+    // persons = persons.concat(person);
+    // response.json(person);
   }
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  const person = persons.find((person) => person.id === id);
+  Person.findById(request.params.id)
+    .then((person) => {
+      response.json(person);
+    })
+    .catch((error) => {
+      response.status(404).end();
+    });
+  // const id = request.params.id;
+  // const person = persons.find((person) => person.id === id);
 
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).end();
-  }
+  // if (person) {
+  //   response.json(person);
+  // } else {
+  //   response.status(404).end();
+  // }
 });
 
+//TODO
 app.delete("/api/persons/:id", (request, response) => {
   const id = request.params.id;
   persons = persons.filter((person) => person.id !== id);
@@ -100,7 +121,7 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-const PORT = process.env.PERSONS_API_PORT || 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
