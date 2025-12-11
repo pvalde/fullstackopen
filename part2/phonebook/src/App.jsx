@@ -57,6 +57,7 @@ const App = () => {
             }, 5000);
           })
           .catch((error) => {
+            console.dir(error);
             if (error.status === 404) {
               setErrorMessage(
                 `Information of ${personToUpdate.name} has already been removed from server`,
@@ -67,6 +68,11 @@ const App = () => {
               setPersons(
                 persons.filter((person) => person.id !== personToUpdate.id),
               );
+            } else if (error.status === 400) {
+              setErrorMessage(error.response.data.error);
+              setTimeout(() => {
+                setErrorMessage(null);
+              }, 5000);
             }
           });
       }
@@ -93,6 +99,14 @@ const App = () => {
         setTimeout(() => {
           setNotificationMessage(null);
         }, 5000);
+      })
+      .catch((error) => {
+        if (error.status === 400) {
+          setErrorMessage(error.response.data.error);
+          setTimeout(() => {
+            setErrorMessage(null);
+          }, 5000);
+        }
       });
   };
 

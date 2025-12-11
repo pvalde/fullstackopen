@@ -11,14 +11,16 @@ morgan.token("body", (request, response) => {
 const errorHandler = (error, request, response, next) => {
   console.log(error.message);
 
-  if (error.name == 'CastError') {
-    return response.status(400).send({ error: 'malformed id' });
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformed id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
 
   next(error);
-}
+};
 
-const checkNameAndNumber = (body => {
+const checkNameAndNumber = (body) => {
   if (!body.name || !body.number) {
     const errorMessage = {
       error:
@@ -30,7 +32,7 @@ const checkNameAndNumber = (body => {
   } else {
     return 0;
   }
-});
+};
 
 const app = express();
 
@@ -44,23 +46,24 @@ app.use(
 app.get("/info", (request, response, error) => {
   const date = new Date();
   Person.countDocuments({})
-    .then(count => {
+    .then((count) => {
       const responseHtml =
         `<p>Phonebook has info for ${count} people.</p>` +
         `<p>${date.toString()}</p>`;
       response.send(responseHtml);
     })
-    .catch(error => next(error));
+    .catch((error) => next(error));
 });
 
 app.get("/api/persons", (request, response, next) => {
-  Person.find({}).then((people) => {
-    response.json(people);
-  }).
-    catch(error => next(error));
+  Person.find({})
+    .then((people) => {
+      response.json(people);
+    })
+    .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
   if (!body.name || !body.number) {
     const errorMessage = {
@@ -76,9 +79,12 @@ app.post("/api/persons", (request, response) => {
       number: body.number,
     });
 
-    person.save().then((result) => {
-      response.json(person.toJSON());
-    });
+    person
+      .save()
+      .then((result) => {
+        response.json(person.toJSON());
+      })
+      .catch((error) => next(error));
   }
 });
 
@@ -93,7 +99,7 @@ app.put("/api/persons/:id", (request, response, next) => {
   const { name, number } = request.body;
 
   Person.findById(id)
-    .then(person => {
+    .then((person) => {
       if (!person) {
         return response.status(404).end();
       }
@@ -101,11 +107,14 @@ app.put("/api/persons/:id", (request, response, next) => {
       person.name = name;
       person.number = number;
 
-      return person.save().then((updatedPerson) => {
-        response.json(updatedPerson);
-      })
+      return person
+        .save()
+        .then((updatedPerson) => {
+          response.json(updatedPerson);
+        })
+        .catch((error) => next(error));
     })
-    .catch(error => next(error));
+    .catch((error) => next(error));
 });
 
 app.get("/api/persons/:id", (request, response, next) => {
@@ -122,17 +131,15 @@ app.get("/api/persons/:id", (request, response, next) => {
 
 app.delete("/api/persons/:id", (request, response) => {
   Person.findByIdAndDelete(request.params.id)
-    .then(result => {
-      response.status(204).end()
+    .then((result) => {
+      response.status(204).end();
     })
-    .catch(error => next(error))
+    .catch((error) => next(error));
 });
 
-
-
 const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: 'unknown endpoint' });
-}
+  response.status(404).send({ error: "unknown endpoint" });
+};
 
 app.use(unknownEndpoint);
 
