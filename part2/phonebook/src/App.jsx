@@ -57,7 +57,6 @@ const App = () => {
             }, 5000);
           })
           .catch((error) => {
-            console.dir(error);
             if (error.status === 404) {
               setErrorMessage(
                 `Information of ${personToUpdate.name} has already been removed from server`,
