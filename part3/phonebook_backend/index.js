@@ -13,6 +13,8 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).send({ error: "malformed id" });
   } else if (error.name === "ValidationError") {
     return response.status(400).json({ error: error.message });
+  } else if (error.name === "MongooseError") {
+    return response.status(400).json({ error: "database error" });
   }
 
   next(error);
